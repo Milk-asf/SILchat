@@ -3,7 +3,7 @@ export interface Profile {
   username: string
   full_name: string
   avatar_url: string | null
-  role: "admin" | "member"
+  role: "super_admin" | "admin" | "member"
   created_at: string
 }
 
@@ -74,7 +74,7 @@ export interface Invitation {
   id: string
   email: string
   invited_by: string
-  role: "admin" | "member"
+  role: "super_admin" | "admin" | "member"
   status: "pending" | "accepted"
   created_at: string
 }

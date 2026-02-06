@@ -32,7 +32,7 @@ export function MembersTab() {
   const [members, setMembers] = useState<Profile[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [inviteEmail, setInviteEmail] = useState("")
-  const [inviteRole, setInviteRole] = useState<"member" | "admin">("member")
+  const [inviteRole, setInviteRole] = useState<"member" | "admin" | "super_admin">("member")
   const [isInviting, setIsInviting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -129,6 +129,11 @@ export function MembersTab() {
       return
     }
 
+    if (currentRole === "super_admin") {
+      toast.error("Cannot change a super admin's role")
+      return
+    }
+
     const newRole = currentRole === "admin" ? "member" : "admin"
     const supabase = createClient()
 
@@ -195,7 +200,7 @@ export function MembersTab() {
           </div>
           <Select
             value={inviteRole}
-            onValueChange={(v) => setInviteRole(v as "member" | "admin")}
+            onValueChange={(v) => setInviteRole(v as "member" | "admin" | "super_admin")}
           >
             <SelectTrigger className="h-9 w-28 text-xs">
               <SelectValue />
@@ -301,15 +306,15 @@ export function MembersTab() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge
-                  variant={member.role === "admin" ? "default" : "secondary"}
+                  variant={member.role !== "member" ? "default" : "secondary"}
                   className="text-[10px]"
                 >
-                  {member.role === "admin" && (
+                  {member.role !== "member" && (
                     <Shield className="mr-1 h-2.5 w-2.5" />
                   )}
-                  {member.role}
+                  {member.role === "super_admin" ? "super admin" : member.role}
                 </Badge>
-                {member.id !== currentProfile.id && (
+                {member.id !== currentProfile.id && member.role !== "super_admin" && (
                   <Button
                     variant="ghost"
                     size="sm"

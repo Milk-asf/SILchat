@@ -6,7 +6,7 @@ import { Hash, Plus } from "lucide-react"
 import { useChatContext } from "@/components/providers/chat-provider"
 import { ChannelCreateDialog } from "./channel-create-dialog"
 import { JoinChannelDialog } from "./join-channel-dialog"
-import { cn } from "@/lib/utils"
+import { cn, hasAdminAccess } from "@/lib/utils"
 import { useState } from "react"
 
 export function ChannelList() {
@@ -15,7 +15,7 @@ export function ChannelList() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isJoinOpen, setIsJoinOpen] = useState(false)
 
-  const isAdmin = profile.role === "admin"
+  const isAdmin = hasAdminAccess(profile)
   const joinedChannels = channels.filter((c) =>
     memberChannelIds.includes(c.id)
   )

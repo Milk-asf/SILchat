@@ -6,12 +6,13 @@ import { usePathname } from "next/navigation"
 import { ChannelList } from "./channel-list"
 import { UserMenu } from "./user-menu"
 import { useChatContext } from "@/components/providers/chat-provider"
+import { hasSuperAdminAccess } from "@/lib/utils"
 import { MessageSquare, Settings } from "lucide-react"
 
 export function Sidebar() {
   const { workspace, profile } = useChatContext()
   const pathname = usePathname()
-  const isAdmin = profile.role === "admin"
+  const isSuperAdmin = hasSuperAdminAccess(profile)
   const isSettingsActive = pathname === "/settings"
 
   return (
@@ -38,7 +39,7 @@ export function Sidebar() {
             {workspace.name}
           </span>
         </div>
-        {isAdmin && (
+        {isSuperAdmin && (
           <Link
             href="/settings"
             className="rounded-md p-1.5 transition-colors hover:bg-gray-200/50"

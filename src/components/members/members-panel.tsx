@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { X, UserPlus, UserMinus, Shield, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useChatContext } from "@/components/providers/chat-provider"
+import { hasAdminAccess } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -24,7 +25,7 @@ interface MemberWithProfile {
 
 export function MembersPanel({ channelId, onClose }: MembersPanelProps) {
   const { profile } = useChatContext()
-  const isAdmin = profile.role === "admin"
+  const isAdmin = hasAdminAccess(profile)
   const [members, setMembers] = useState<MemberWithProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
@@ -126,13 +127,13 @@ export function MembersPanel({ channelId, onClose }: MembersPanelProps) {
         ) : (
           <div className="py-2">
             {/* Admins first */}
-            {members.filter((m) => m.profile.role === "admin").length > 0 && (
+            {members.filter((m) => m.profile.role === "admin" || m.profile.role === "super_admin").length > 0 && (
               <>
                 <p className="px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-400">
                   Admins
                 </p>
                 {members
-                  .filter((m) => m.profile.role === "admin")
+                  .filter((m) => m.profile.role === "admin" || m.profile.role === "super_admin")
                   .map((member) => (
                     <MemberRow
                       key={member.id}
@@ -151,7 +152,7 @@ export function MembersPanel({ channelId, onClose }: MembersPanelProps) {
               Members
             </p>
             {members
-              .filter((m) => m.profile.role !== "admin")
+              .filter((m) => m.profile.role === "member")
               .map((member) => (
                 <MemberRow
                   key={member.id}
@@ -163,7 +164,7 @@ export function MembersPanel({ channelId, onClose }: MembersPanelProps) {
                 />
               ))}
 
-            {members.filter((m) => m.profile.role !== "admin").length === 0 && (
+            {members.filter((m) => m.profile.role === "member").length === 0 && (
               <p className="px-4 py-4 text-center text-xs text-gray-400">
                 No regular members yet.
               </p>
@@ -222,7 +223,7 @@ function MemberRow({
             {isSelf && (
               <span className="text-xs text-gray-400">you</span>
             )}
-            {p.role === "admin" && (
+            {(p.role === "admin" || p.role === "super_admin") && (
               <Shield className="h-3 w-3 text-gray-400" />
             )}
           </div>

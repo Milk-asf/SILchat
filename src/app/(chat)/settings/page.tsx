@@ -17,7 +17,7 @@ export default async function SettingsPage() {
     .eq("id", user.id)
     .single()
 
-  if (!profile || profile.role !== "admin") redirect("/chat")
+  if (!profile || profile.role !== "super_admin") redirect("/chat")
 
   return <SettingsContent />
 }

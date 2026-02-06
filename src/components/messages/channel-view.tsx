@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Hash, Users, Trash2, Settings } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useChatContext } from "@/components/providers/chat-provider"
+import { hasAdminAccess } from "@/lib/utils"
 import { useMessages } from "@/lib/hooks/use-messages"
 import { useTyping } from "@/lib/hooks/use-typing"
 import { useReactions } from "@/lib/hooks/use-reactions"
@@ -37,7 +38,7 @@ interface ChannelViewProps {
 export function ChannelView({ channel }: ChannelViewProps) {
   const router = useRouter()
   const { profile, activeThreadMessage, removeChannel } = useChatContext()
-  const isAdmin = profile.role === "admin"
+  const isAdmin = hasAdminAccess(profile)
   const { messages, isLoading, hasMore, loadMore, sendMessage, toggleHideMessage, deleteMessage, deleteForMe } =
     useMessages(channel.id, isAdmin)
   const { typingUsers, startTyping, stopTyping } = useTyping(

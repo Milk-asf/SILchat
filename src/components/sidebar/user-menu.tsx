@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useChatContext } from "@/components/providers/chat-provider"
+import { hasAdminAccess } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -11,7 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, Shield } from "lucide-react"
+import { LogOut, Shield, ShieldCheck } from "lucide-react"
+
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  member: "Member",
+}
 
 export function UserMenu() {
   const router = useRouter()
@@ -33,6 +40,8 @@ export function UserMenu() {
         .slice(0, 2)
     : profile.username.slice(0, 2).toUpperCase()
 
+  const isAdmin = hasAdminAccess(profile)
+
   return (
     <div className="border-t border-gray-200 p-3">
       <DropdownMenu>
@@ -51,11 +60,18 @@ export function UserMenu() {
                 {profile.full_name || profile.username}
               </p>
             </div>
-            {profile.role === "admin" && (
-              <Shield
-                className="h-3.5 w-3.5"
-                style={{ color: "var(--workspace-accent, #4F46E5)" }}
-              />
+            {isAdmin && (
+              profile.role === "super_admin" ? (
+                <ShieldCheck
+                  className="h-3.5 w-3.5"
+                  style={{ color: "var(--workspace-accent, #4F46E5)" }}
+                />
+              ) : (
+                <Shield
+                  className="h-3.5 w-3.5"
+                  style={{ color: "var(--workspace-accent, #4F46E5)" }}
+                />
+              )
             )}
           </button>
         </DropdownMenuTrigger>
@@ -63,8 +79,8 @@ export function UserMenu() {
           <div className="px-2 py-1.5">
             <p className="text-sm font-medium">{profile.full_name}</p>
             <p className="text-xs text-gray-500">@{profile.username}</p>
-            <p className="mt-0.5 text-xs capitalize text-gray-400">
-              {profile.role}
+            <p className="mt-0.5 text-xs text-gray-400">
+              {ROLE_LABELS[profile.role] || profile.role}
             </p>
           </div>
           <DropdownMenuSeparator />
