@@ -5,12 +5,36 @@ import { createClient } from "@/lib/supabase/client"
 import type { Message } from "@/lib/types"
 
 const PAGE_SIZE = 50
+const DELETE_WINDOW_MS = 3 * 60 * 1000 // 3 minutes
 
 export function useMessages(channelId: string, isAdmin: boolean) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [deletedForMe, setDeletedForMe] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
   const supabaseRef = useRef(createClient())
+
+  // Fetch user's "deleted for me" message IDs
+  useEffect(() => {
+    const fetchDeletedForMe = async () => {
+      const supabase = supabaseRef.current
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from("message_deletions")
+        .select("message_id")
+        .eq("user_id", user.id)
+
+      if (data) {
+        setDeletedForMe(new Set(data.map((d) => d.message_id)))
+      }
+    }
+
+    fetchDeletedForMe()
+  }, [channelId])
 
   // Fetch initial messages
   useEffect(() => {
@@ -66,7 +90,7 @@ export function useMessages(channelId: string, isAdmin: boolean) {
     fetchMessages()
   }, [channelId, isAdmin])
 
-  // Subscribe to realtime inserts and updates
+  // Subscribe to realtime inserts, updates, and deletes
   useEffect(() => {
     const supabase = supabaseRef.current
 
@@ -224,13 +248,69 @@ export function useMessages(channelId: string, isAdmin: boolean) {
     []
   )
 
+  // Delete message for everyone (within 3 min or admin)
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      const supabase = supabaseRef.current
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", messageId)
+
+      if (error) {
+        console.error("Failed to delete message:", error)
+        throw error
+      }
+
+      // Optimistic removal (realtime will also fire)
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
+    },
+    []
+  )
+
+  // Delete message for me only (after 3 min window)
+  const deleteForMe = useCallback(
+    async (messageId: string) => {
+      const supabase = supabaseRef.current
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase.from("message_deletions").insert({
+        message_id: messageId,
+        user_id: user.id,
+      })
+
+      if (error) {
+        console.error("Failed to delete for me:", error)
+        throw error
+      }
+
+      setDeletedForMe((prev) => new Set([...prev, messageId]))
+    },
+    []
+  )
+
+  // Filter out "deleted for me" messages
+  const visibleMessages = messages.filter((m) => !deletedForMe.has(m.id))
+
   return {
-    messages,
+    messages: visibleMessages,
     isLoading,
     hasMore,
     loadMore,
     sendMessage,
     toggleHideMessage,
+    deleteMessage,
+    deleteForMe,
     setMessages,
   }
+}
+
+/** Check if a message is within the 3-minute delete window */
+export function isWithinDeleteWindow(createdAt: string): boolean {
+  const messageTime = new Date(createdAt).getTime()
+  const now = Date.now()
+  return now - messageTime < DELETE_WINDOW_MS
 }

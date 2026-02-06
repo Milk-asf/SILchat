@@ -38,7 +38,7 @@ export function ChannelView({ channel }: ChannelViewProps) {
   const router = useRouter()
   const { profile, activeThreadMessage, removeChannel } = useChatContext()
   const isAdmin = profile.role === "admin"
-  const { messages, isLoading, hasMore, loadMore, sendMessage, toggleHideMessage } =
+  const { messages, isLoading, hasMore, loadMore, sendMessage, toggleHideMessage, deleteMessage, deleteForMe } =
     useMessages(channel.id, isAdmin)
   const { typingUsers, startTyping, stopTyping } = useTyping(
     channel.id,
@@ -143,6 +143,8 @@ export function ChannelView({ channel }: ChannelViewProps) {
           getReactionGroups={getReactionGroups}
           onToggleReaction={toggleReaction}
           onToggleHide={isAdmin ? toggleHideMessage : undefined}
+          onDelete={deleteMessage}
+          onDeleteForMe={deleteForMe}
           isAdmin={isAdmin}
         />
 

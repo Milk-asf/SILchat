@@ -15,6 +15,8 @@ interface MessageFeedProps {
   getReactionGroups: (messageId: string) => ReactionGroup[]
   onToggleReaction: (messageId: string, emoji: string) => void
   onToggleHide?: (messageId: string, hide: boolean) => Promise<void>
+  onDelete?: (messageId: string) => Promise<void>
+  onDeleteForMe?: (messageId: string) => Promise<void>
   isAdmin?: boolean
 }
 
@@ -26,6 +28,8 @@ export function MessageFeed({
   getReactionGroups,
   onToggleReaction,
   onToggleHide,
+  onDelete,
+  onDeleteForMe,
   isAdmin = false,
 }: MessageFeedProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null)
@@ -103,6 +107,8 @@ export function MessageFeed({
               onToggleReaction(message.id, emoji)
             }
             onToggleHide={onToggleHide}
+            onDelete={onDelete}
+            onDeleteForMe={onDeleteForMe}
             isAdmin={isAdmin}
           />
         </div>
