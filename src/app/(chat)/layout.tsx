@@ -28,16 +28,19 @@ export default async function ChatLayout({
 
   if (!profile) redirect("/login")
 
-  const memberChannelIds = new Set(
-    memberships?.map((m) => m.channel_id) ?? []
-  )
+  const isAdmin = profile.role === "admin" || profile.role === "super_admin"
+
+  // Admins see all channels; regular members only see channels they've joined
+  const memberChannelIds = isAdmin
+    ? (channels ?? []).map((c) => c.id)
+    : (memberships?.map((m) => m.channel_id) ?? [])
 
   return (
     <ChatProvider
       initialProfile={profile}
       initialWorkspace={workspace}
       initialChannels={channels ?? []}
-      initialMemberChannelIds={Array.from(memberChannelIds)}
+      initialMemberChannelIds={memberChannelIds}
     >
       <WorkspaceTheme />
       <div className="flex h-screen overflow-hidden bg-white">

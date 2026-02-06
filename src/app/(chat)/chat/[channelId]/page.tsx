@@ -16,15 +16,26 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
   if (!user) redirect("/login")
 
-  // Verify channel exists and user is a member
-  const { data: membership } = await supabase
-    .from("channel_members")
-    .select("id")
-    .eq("channel_id", channelId)
-    .eq("user_id", user.id)
+  // Check if user is admin/super_admin
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
     .single()
 
-  if (!membership) redirect("/chat")
+  const isAdmin = profile?.role === "admin" || profile?.role === "super_admin"
+
+  // Admins can access any channel; members must be a member
+  if (!isAdmin) {
+    const { data: membership } = await supabase
+      .from("channel_members")
+      .select("id")
+      .eq("channel_id", channelId)
+      .eq("user_id", user.id)
+      .single()
+
+    if (!membership) redirect("/chat")
+  }
 
   const { data: channel } = await supabase
     .from("channels")
